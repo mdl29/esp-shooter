@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ronds Numériques</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: white;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: lightgray;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .circle.highlight {
+            background-color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="circles-container"></div>
+    
+    <script>
+        const api_key = "your_api_key";
+        const delay = 500;
+
+        function updateCircles(numbers, targetValue) {
+            const container = document.getElementById("circles-container");
+            container.innerHTML = "";
+            numbers.forEach(num => {
+                const circle = document.createElement("div");
+                circle.classList.add("circle");
+                circle.textContent = num;
+                if (num >= targetValue) {
+                    circle.classList.add("highlight");
+                }
+                container.appendChild(circle);
+            });
+        }
+
+        async function fetchData() {
+            while (true) {
+                try {
+                    const response = await fetch("http://0.0.0.0:8081/api/get_scores", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 'api_key': api_key })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        updateCircles(data.scores, data.target_score);
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de la récupération des données :", error);
+                }
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
