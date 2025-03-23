@@ -12,34 +12,20 @@
 #define LED_PIN 21
 #define MAX_VALUE 650
 // COMS
-#define SSID "your_ssid"
-#define PASSWORD "your_password"
-#define SERVER_IP "192.168.1.147"
-#define SERVER_PORT 8081
+#define SSID "ssid"
+#define PASSWORD "password"
 #define API_KEY "your_api_key"
 
 
 struct ServoParams {
-    int servo_pin;
-    Global* global;
     ServoMotor *servo;
 };
 
 struct SensorParams {
-    int sensor_pin;
-    int led_pin;
-    int max_value;
-    Global* global;
     Sensor *sensor;
 };
 
 struct ComsParams {
-    String ssid;
-    String password;
-    String server_ip_address;
-    int server_port;
-    String api_key;
-    Global* global;
     Coms *coms;
 };
 
@@ -73,15 +59,15 @@ void setup() {
     global.max_delay = 1;
     
     static ServoMotor* servo = new ServoMotor(SERVO_PIN, &global);
-    static ServoParams *servo_params = new ServoParams{SERVO_PIN, &global, servo};
+    static ServoParams *servo_params = new ServoParams{servo};
     xTaskCreate(servo_wrapper, "ServoTask", 3000, (void*)servo_params, 1, NULL);
 
     static Sensor* sensor = new Sensor(SENSOR_PIN, LED_PIN, MAX_VALUE, &global);
-    static SensorParams *sensor_params = new SensorParams{SENSOR_PIN, LED_PIN, MAX_VALUE, &global, sensor};
+    static SensorParams *sensor_params = new SensorParams{sensor};
     xTaskCreate(sensor_wrapper, "SensorTask", 3000, (void*)sensor_params, 1, NULL);
 
-    static Coms* coms = new Coms(SSID, PASSWORD, SERVER_IP, SERVER_PORT, API_KEY, &global);
-    static ComsParams *coms_params = new ComsParams{SSID, PASSWORD, SERVER_IP, SERVER_PORT, API_KEY, &global, coms};
+    static Coms* coms = new Coms(SSID, PASSWORD, API_KEY, &global);
+    static ComsParams *coms_params = new ComsParams{coms};
     xTaskCreate(coms_wrapper, "ComsTask", 8000, (void*)coms_params, 1, NULL);
 }
 

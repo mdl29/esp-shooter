@@ -4,11 +4,12 @@
 #include <ArduinoJson.h>
 #include "Coms.h"
 #include "Global.h"
+#include <ESPmDNS.h>
 
-Coms::Coms(String ssid, String password, String server_ip_address, int server_port, String api_key, Global* global)
-    : ssid(ssid), password(password), server_ip_address(server_ip_address), server_port(server_port), api_key(api_key), global(global) {
-
+Coms::Coms(String ssid, String password,  String api_key, Global* global) 
+    : ssid(ssid), password(password),  api_key(api_key), global(global) {
     debug = false;
+    server_port = 7890;
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     Serial.println("\nConnecting");
@@ -21,6 +22,32 @@ Coms::Coms(String ssid, String password, String server_ip_address, int server_po
     Serial.println("\nConnected to the WiFi network");
     Serial.print("Local ESP32 IP: ");
     Serial.println(WiFi.localIP());
+    find_server();
+}
+
+void Coms::find_server() {
+    if (!MDNS.begin("target_client")) {
+        Serial.println("Erreur : échec de l'initialisation de mDNS");
+        return;
+    }
+
+    Serial.println("Recherche du serveur mDNS...");
+    int i = 1;
+
+    while (true) {
+        IPAddress serverIP = MDNS.queryHost("shooter_server");
+        if (serverIP) {
+            server_ip_address = serverIP.toString();
+            Serial.print("Serveur trouvé : ");
+            Serial.println(serverIP);
+            return;
+        }
+        Serial.print("Essai ");
+        Serial.print(i);
+        Serial.println(" : Serveur non trouvé, nouvelle tentative...");
+        i++;
+        delay(1000);
+    }
 }
 
 void Coms::loop_backend() {
@@ -32,6 +59,7 @@ void Coms::loop_backend() {
         global->running = (is_running == "true");
 
         if (is_running=="true") {global->running==true;}
+        else if (is_running=="ERROR") {find_server();}
         if (global->running) {
             int level_counter_ = post_request("/api/get_level_counter").toInt();
 

@@ -38,7 +38,6 @@
     <div class="container" id="circles-container"></div>
     
     <script>
-        const api_key = "your_api_key";
         const delay = 500;
 
         function updateCircles(numbers, targetValue) {
@@ -58,13 +57,12 @@
         async function fetchData() {
             while (true) {
                 try {
-                    const response = await fetch("http://0.0.0.0:8081/api/get_scores", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ 'api_key': api_key })
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("GET", window.location.origin+"/api/get_scores");
+                    xhr.send();
+                    xhr.responseType = "json";
+                    xhr.onload = () => {
+                        const data = xhr.response;
                         updateCircles(data.scores, data.target_score);
                     }
                 } catch (error) {

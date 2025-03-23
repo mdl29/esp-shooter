@@ -2,6 +2,7 @@ import threading
 from flask import Flask, request, jsonify, render_template
 import logging
 import time
+from zeroconf import Zeroconf, ServiceInfo
 import socket
 import readline
 import sys
@@ -10,7 +11,7 @@ from flask_cors import CORS, cross_origin
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-API_KEYS = []
+API_KEYS = ["your_api_key"]
 
 levels = [
     {"target_score":2,
@@ -32,6 +33,41 @@ def print_with_prompt(message):
     sys.stdout.write(f"shooter> {readline.get_line_buffer()}")
     sys.stdout.flush()
 
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    local_ip = s.getsockname()[0]
+    s.close()
+    return local_ip
+
+
+def start_mdns(service_name="shooter_server", service_type="_http._tcp.local.", port=7890):
+    """Démarre un serveur mDNS et réannonce le service périodiquement."""
+    zeroconf = Zeroconf()
+    local_ip = get_local_ip()
+    
+    service_info = ServiceInfo(
+        type_=service_type,
+        name=f"{service_name}.{service_type}",
+        addresses=[socket.inet_aton(local_ip)],
+        port=port
+    )
+
+    zeroconf.register_service(service_info)
+    print(f"mDNS annoncé : {service_name} -> {local_ip}:{port}")
+
+    try:
+        while True:
+            time.sleep(1)
+            zeroconf.update_service(service_info)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        zeroconf.unregister_service(service_info)
+        zeroconf.close()
+
+threading.Thread(target=start_mdns, daemon=True).start()
+
 
 class FlaskApp :
     def __init__(self):
@@ -51,7 +87,7 @@ class FlaskApp :
 
         self.app.config['TEMPLATES_AUTO_RELOAD'] = True
         self.app.add_url_rule("/", "index", self.index)
-        self.app.add_url_rule("/api/get_scores", "get_scores", self.get_scores, methods=['POST'])
+        self.app.add_url_rule("/api/get_scores", "get_scores", self.get_scores)
         self.app.add_url_rule("/api/is_running", "is_running", self.is_running, methods=['POST'])
         self.app.add_url_rule("/api/update_score", "update_score", self.update_score, methods=['POST'])
         self.app.add_url_rule("/api/get_level_info", "get_level_info", self.get_level_info, methods=['POST'])
@@ -61,11 +97,7 @@ class FlaskApp :
         return render_template("index.html")
     
     def get_scores(self):
-        data = request.get_json()
-        api_key = data.get("api_key")
-        if api_key  in API_KEYS:
-            return jsonify({"scores":[self.scores[d] for d in list(self.scores.keys())], "target_score":self.target_score})
-        return "", 498
+        return jsonify({"scores":[self.scores[d] for d in list(self.scores.keys())], "target_score":self.target_score})
 
     def is_running(self):
         data = request.get_json()
@@ -112,7 +144,7 @@ class FlaskApp :
         return "", 498
 
     def run(self):
-        self.app.run(host="0.0.0.0", port=8081, debug=False)
+        self.app.run(host="0.0.0.0", port=7890, debug=False)
 
     def load_level(self, level_id):
         self.reset_scores()
@@ -136,10 +168,8 @@ flask_thread.start()
 time.sleep(1)
 
 print("Console interactive. Tape 'exit' pour quitter.")
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-print(f"Server local IP : {s.getsockname()[0]}")
-s.close()
+
+print(f"Server local IP : {get_local_ip():}")
 
 while True:
     cmd = input("shooter> ")
