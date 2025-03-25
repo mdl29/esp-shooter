@@ -10,11 +10,12 @@
 // SENSOR
 #define SENSOR_PIN 4 // 10K 
 #define LED_PIN 21
-#define MAX_VALUE 650
+#define MAX_VALUE 1000
 // COMS
-#define SSID "ssid"
-#define PASSWORD "password"
-#define API_KEY "your_api_key"
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
+const char* api_key = API_KEY;
+
 
 
 struct ServoParams {
@@ -66,7 +67,7 @@ void setup() {
     static SensorParams *sensor_params = new SensorParams{sensor};
     xTaskCreate(sensor_wrapper, "SensorTask", 3000, (void*)sensor_params, 1, NULL);
 
-    static Coms* coms = new Coms(SSID, PASSWORD, API_KEY, &global);
+    static Coms* coms = new Coms(ssid, password, api_key, &global);
     static ComsParams *coms_params = new ComsParams{coms};
     xTaskCreate(coms_wrapper, "ComsTask", 8000, (void*)coms_params, 1, NULL);
 }

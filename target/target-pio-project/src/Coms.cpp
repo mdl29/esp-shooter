@@ -12,7 +12,7 @@ Coms::Coms(String ssid, String password,  String api_key, Global* global)
     server_port = 7890;
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
-    Serial.println("\nConnecting");
+    Serial.println("\nConnecting to " + ssid);
 
     while(WiFi.status() != WL_CONNECTED){
         Serial.print(".");
