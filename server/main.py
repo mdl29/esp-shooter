@@ -190,7 +190,7 @@ while True:
         print("Serveur arrêté.")
 
     elif cmd == "status":
-        print(f"Serveur {'en cours d\'exécution' if flask_app.running else 'arrêté'}.")
+        print(f"Server {'running' if flask_app.running else 'stopped'}.")
 
     elif cmd == "scores":
         for i in list(flask_app.scores.keys()):
