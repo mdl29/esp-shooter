@@ -1,26 +1,18 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include "ServoMotor.h"
+#include "ServoEasing.hpp"
 #include "Sensor.h"
 #include "Coms.h"
 #include "Global.h"
 
 // SERVO
-#define SERVO_PIN 7
+const int servo_pin = SERVO_PIN;
 // SENSOR
-#define SENSOR_PIN 4 // 10K 
-#define LED_PIN 21
-#define MAX_VALUE 1000
+const int sensor_pin = SENSOR_PIN; // ~10K 
+const int max_value = MAX_VALUE;
 // COMS
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 const char* api_key = API_KEY;
-
-
-
-struct ServoParams {
-    ServoMotor *servo;
-};
 
 struct SensorParams {
     Sensor *sensor;
@@ -29,11 +21,6 @@ struct SensorParams {
 struct ComsParams {
     Coms *coms;
 };
-
-void servo_wrapper(void *pvParameters) {
-    ServoParams *params = static_cast<ServoParams*>(pvParameters);
-    params->servo->loop_program();
-}
 
 void sensor_wrapper(void *pvParameters) {
     SensorParams *params = static_cast<SensorParams*>(pvParameters);
@@ -58,18 +45,42 @@ void setup() {
     global.max_speed = 10;
     global.min_delay = 0;
     global.max_delay = 1;
-    
-    static ServoMotor* servo = new ServoMotor(SERVO_PIN, &global);
-    static ServoParams *servo_params = new ServoParams{servo};
-    xTaskCreate(servo_wrapper, "ServoTask", 3000, (void*)servo_params, 1, NULL);
 
-    static Sensor* sensor = new Sensor(SENSOR_PIN, LED_PIN, MAX_VALUE, &global);
+    static Sensor* sensor = new Sensor(sensor_pin,  max_value, &global);
     static SensorParams *sensor_params = new SensorParams{sensor};
     xTaskCreate(sensor_wrapper, "SensorTask", 3000, (void*)sensor_params, 1, NULL);
 
     static Coms* coms = new Coms(ssid, password, api_key, &global);
     static ComsParams *coms_params = new ComsParams{coms};
     xTaskCreate(coms_wrapper, "ComsTask", 8000, (void*)coms_params, 1, NULL);
+
+    // Servo
+
+    ServoEasing myservo;
+
+    myservo.attach(servo_pin, 90);
+    bool debug = false;
+    
+    while (true) {
+        if (global.running && global.score<global.target_score) {
+            if (global.max_speed != 0) {
+                int speed = random(global.min_speed, global.max_speed);
+                int target_pos = random(1, 180);
+                myservo.easeTo(target_pos, speed);
+                if (debug) {
+                    Serial.print("SERVO  | goto:");
+                    Serial.println(target_pos);
+                }
+                delay(random(global.min_delay, global.max_delay));
+            }
+            else if (global.max_speed == 0) {
+                myservo.easeTo(90,180);
+            }
+        }
+        else {
+            myservo.stop();
+        }
+    }
 }
 
 void loop() {

@@ -2,11 +2,10 @@
 #include "Sensor.h"
 #include "Global.h"
 
-Sensor::Sensor(int sensor_pin, int led_pin, int max_value, Global* global)
-    : sensor_pin(sensor_pin), led_pin(led_pin), max_value(max_value), global(global) {
+Sensor::Sensor(int sensor_pin, int max_value, Global* global)
+    : sensor_pin(sensor_pin), max_value(max_value), global(global) {
     debug = false;
     pinMode(sensor_pin, INPUT);
-    pinMode(led_pin, OUTPUT);
 }
 
 int Sensor::get_sensor_value() {
@@ -41,14 +40,9 @@ void Sensor::loop_backend() {
             }
             else if (detection()) {
                 global->score++;
-                digitalWrite(led_pin, HIGH);
                 if (global->score<global->target_score) {
                     vTaskDelay(pdMS_TO_TICKS(1500));
-                    digitalWrite(led_pin, LOW);
                 }
-            }
-            else {
-                digitalWrite(led_pin, LOW);
             }
         }
 
