@@ -6,6 +6,7 @@ Sensor::Sensor(int sensor_pin, int max_value, Global* global)
     : sensor_pin(sensor_pin), max_value(max_value), global(global) {
     debug = false;
     pinMode(sensor_pin, INPUT);
+    randomSeed(analogRead(27));
 }
 
 int Sensor::get_sensor_value() {

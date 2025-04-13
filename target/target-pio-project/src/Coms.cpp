@@ -65,7 +65,6 @@ void Coms::loop_backend() {
 
             if (level_counter != level_counter_) {
                 Serial.println("Level changed !");
-                randomSeed(analogRead(35));
                 level_counter = level_counter_;
                 String jsonLevel = post_request("/api/get_level_info");
 
