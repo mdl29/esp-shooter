@@ -14,15 +14,21 @@ log.setLevel(logging.ERROR)
 API_KEYS = ["your_api_key"]
 
 levels = [
+    {"target_score":1,
+     "min_speed":0,
+     "max_speed":0,
+     "min_delay":500,
+     "max_delay":2000},
+
     {"target_score":2,
-     "min_speed":1,
-     "max_speed":3,
+     "min_speed":20,
+     "max_speed":50,
      "min_delay":500,
      "max_delay":2000},
 
     {"target_score":5,
-     "min_speed":3,
-     "max_speed":6,
+     "min_speed":100,
+     "max_speed":200,
      "min_delay":0,
      "max_delay":250}
 ]

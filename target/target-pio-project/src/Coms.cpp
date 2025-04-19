@@ -65,7 +65,6 @@ void Coms::loop_backend() {
 
             if (level_counter != level_counter_) {
                 Serial.println("Level changed !");
-                randomSeed(analogRead(6));
                 level_counter = level_counter_;
                 String jsonLevel = post_request("/api/get_level_info");
 
@@ -86,40 +85,6 @@ void Coms::loop_backend() {
                 post_request("/api/update_score", (String)score);
             }
         }
-    }
-}
-
-String Coms::get_request(String address) {
-    if (WiFi.status() == WL_CONNECTED) {
-        HTTPClient http;
-  
-        String serverPath = "http://" + (String)server_ip_address + ":" + (String)server_port + address;
-        
-        if (debug) {Serial.println(serverPath);}
-
-        http.begin(serverPath.c_str());
-
-        int httpResponseCode = http.GET();
-        
-        if (httpResponseCode > 0) {
-            String payload = http.getString();
-            http.end();
-            if (debug) {
-                Serial.println(payload);
-                Serial.println(httpResponseCode);
-            }
-            return payload;
-        }
-        else {
-            Serial.print("Error code: ");
-            Serial.println(httpResponseCode);
-            http.end();
-            return "ERROR";
-        }
-        
-    } else {
-        Serial.println("WiFi Disconnected");
-        return "ERROR";
     }
 }
 

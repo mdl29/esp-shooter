@@ -14,7 +14,6 @@ class Coms {
         bool debug;
         Coms(String ssid, String password, String api_key, Global* global);
         void find_server();
-        String get_request(String address);
         String post_request(String address);
         String post_request(String address, String data);
         void loop_backend();
