@@ -1,5 +1,6 @@
 Beige  : PLA Basic-10201 (#F7E6DE)
 Black  : PLA Matte-11101 (#000000)
 Blue   : PLA Matte-11600 (#0078BF)
+Brown  : PLA Basic-10800 (#9D432C)
 Brun   : PLA MATTE-11800 (#D3B7A7)
 Yellow : PETG HF-33400   (#FFD00B)
