@@ -13,7 +13,6 @@ from flask_cors import CORS, cross_origin
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-API_KEYS = ["your_api_key"]
 
 levels = [
     {"target_score":1,
@@ -96,10 +95,6 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 def index():
     return render_template("index.html")
 
-@app.route("/api/get_scores", methods=["GET"])
-def get_scores():
-    return jsonify({"scores":[scores[d] for d in list(scores.keys())], "target_score":target_score})
-
 @sock.route("/api/ws")
 def websocket(ws:Server):
     authed = False
@@ -113,6 +108,10 @@ def websocket(ws:Server):
 
         data = json.loads(raw)
         action = data.get("action")
+
+        if action == "get_scores":
+            ws.send(json.dumps({"scores":[scores[d] for d in list(scores.keys())], "target_score":target_score}))
+            continue
 
         if action == "auth":
             token = data.get("token")

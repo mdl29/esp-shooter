@@ -55,20 +55,15 @@
         }
 
         async function fetchData() {
-            while (true) {
-                try {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open("GET", window.location.origin+"/api/get_scores");
-                    xhr.send();
-                    xhr.responseType = "json";
-                    xhr.onload = () => {
-                        const data = xhr.response;
-                        updateCircles(data.scores, data.target_score);
-                    }
-                } catch (error) {
-                    console.error("Erreur lors de la récupération des données :", error);
-                }
-                await new Promise(resolve => setTimeout(resolve, delay));
+            ws = new WebSocket("/api/ws")
+            ws.addEventListener("open", () => {
+                setInterval(() => {
+                    ws.send(JSON.stringify({'action':'get_scores'}));
+                }, 1000);
+            });
+            ws.onmessage = (event) => {
+                data = JSON.parse(event.data);
+                updateCircles(data.scores, data.target_score);
             }
         }
 
