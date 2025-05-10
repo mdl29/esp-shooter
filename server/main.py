@@ -129,7 +129,7 @@ def websocket(ws:Server):
         if action == "update_score":
             score = data.get("score")
             
-            if token == None: ws.close()
+            if not authed: ws.close()
             if score == None:
                 ws.send(json.dumps({"success":False,"message": "missing 'score' value"}))
                 continue
@@ -144,28 +144,21 @@ def websocket(ws:Server):
 
                 ws.send(json.dumps({"success":True}))
 
-        ws.send(json.dumps({"success":False}))
+            ws.send(json.dumps({"success":False}))
 
-@app.route("/api/get_level_counter", methods=["POST"])
-def get_level_counter():
-    data = request.get_json()
-    api_key = data.get("api_key")
-    if api_key  in API_KEYS:
-        return str(level_counter)
-    return "", 498
+        if action == "get_level_counter":
+            if not authed: ws.close()
+            ws.send(json.dumps({"success":True,"data":level_counter}))
 
-@app.route("/api/get_level_info", methods=["POST"])
-def get_level_info():
-    data = request.get_json()
-    api_key = data.get("api_key")
-    if api_key  in API_KEYS:
-        return jsonify({"level_counter":level_counter, 
-                        "target_score":target_score,
-                        "min_speed":min_speed,
-                        "max_speed":max_speed,
-                        "min_delay":min_delay,
-                        "max_delay":max_delay})
-    return "", 498
+        if action == "get_level_info":
+            if not authed: ws.close()
+            ws.send(json.dumps({"level_counter":level_counter, 
+                                "target_score":target_score,
+                                "min_speed":min_speed,
+                                "max_speed":max_speed,
+                                "min_delay":min_delay,
+                                "max_delay":max_delay
+                            }))
 
 def run():
     app.run(host="0.0.0.0", port=7890, debug=False)
