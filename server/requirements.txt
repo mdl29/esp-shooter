@@ -1,3 +1,4 @@
 flask
 zeroconf
 flask_cors
+flask-sock
