@@ -3,9 +3,11 @@ from flask import Flask, request, jsonify, render_template
 import logging
 import time
 from zeroconf import Zeroconf, ServiceInfo
+from flask_sock import Sock, Server
 import socket
 import readline
 import sys
+import json
 from flask_cors import CORS, cross_origin
 
 log = logging.getLogger('werkzeug')
@@ -15,22 +17,22 @@ API_KEYS = ["your_api_key"]
 
 levels = [
     {"target_score":1,
-     "min_speed":0,
-     "max_speed":0,
-     "min_delay":500,
-     "max_delay":2000},
+    "min_speed":0,
+    "max_speed":0,
+    "min_delay":500,
+    "max_delay":2000},
 
     {"target_score":2,
-     "min_speed":20,
-     "max_speed":50,
-     "min_delay":500,
-     "max_delay":2000},
+    "min_speed":20,
+    "max_speed":50,
+    "min_delay":500,
+    "max_delay":2000},
 
     {"target_score":5,
-     "min_speed":100,
-     "max_speed":200,
-     "min_delay":0,
-     "max_delay":250}
+    "min_speed":100,
+    "max_speed":200,
+    "min_delay":0,
+    "max_delay":250}
 ]
 
 def print_with_prompt(message):
@@ -60,7 +62,7 @@ def start_mdns(service_name="shooter_server", service_type="_http._tcp.local.", 
     )
 
     zeroconf.register_service(service_info)
-    print(f"mDNS annoncé : {service_name} -> {local_ip}:{port}")
+    print(f"mDNS annoncé : {service_name} -> http://{local_ip}:{port}")
 
     try:
         while True:
@@ -75,107 +77,119 @@ def start_mdns(service_name="shooter_server", service_type="_http._tcp.local.", 
 threading.Thread(target=start_mdns, daemon=True).start()
 
 
-class FlaskApp :
-    def __init__(self):
-        self.app = Flask(__name__) 
-        CORS(self.app)
+app = Flask(__name__)
+sock = Sock(app)
+CORS(app)
 
-        self.running = False 
-        self.scores = {}
-        self.level_counter = 0
-        self.target_score = 0
-        self.min_speed = 0
-        self.max_speed = 0
-        self.min_delay = 0
-        self.max_delay = 0
-        
-        self.load_level(0)
+running = False 
+scores = {}
+level_counter = 0
+target_score = 0
+min_speed = 0
+max_speed = 0
+min_delay = 0
+max_delay = 0
 
-        self.app.config['TEMPLATES_AUTO_RELOAD'] = True
-        self.app.add_url_rule("/", "index", self.index)
-        self.app.add_url_rule("/api/get_scores", "get_scores", self.get_scores)
-        self.app.add_url_rule("/api/is_running", "is_running", self.is_running, methods=['POST'])
-        self.app.add_url_rule("/api/update_score", "update_score", self.update_score, methods=['POST'])
-        self.app.add_url_rule("/api/get_level_info", "get_level_info", self.get_level_info, methods=['POST'])
-        self.app.add_url_rule("/api/get_level_counter", "get_level_counter", self.get_level_counter, methods=['POST'])
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-    def index(self):
-        return render_template("index.html")
-    
-    def get_scores(self):
-        return jsonify({"scores":[self.scores[d] for d in list(self.scores.keys())], "target_score":self.target_score})
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
-    def is_running(self):
-        data = request.get_json()
-        api_key = data.get("api_key")
-        if api_key  in API_KEYS:
-            if self.running:
-                return "true"
-            else:
-                return "false" 
-        return "", 498
+@app.route("/api/get_scores", methods=["GET"])
+def get_scores():
+    return jsonify({"scores":[scores[d] for d in list(scores.keys())], "target_score":target_score})
 
-    def update_score(self):
-        data = request.get_json()
-        api_key = data.get("api_key")
-        score = data.get("data")
-        ip = request.remote_addr
-        if api_key  in API_KEYS:
-            if (not ip in list(self.scores.keys())) or (self.scores[ip]!=score) and self.running:
-                self.scores.update({ip:score})
-                print_with_prompt(f"Score ({ip}) : {self.scores[ip]}")
-                if self.scores[ip]>=self.target_score:
-                        print_with_prompt(f"Niveau terminé ({ip}) !")
+@sock.route("/api/ws")
+def websocket(ws:Server):
+    authed = False
+    ip = request.remote_addr
+    while True:
+        raw = ws.receive()
+
+        if raw == "ping":
+            ws.send("pong")
+            continue
+
+        data = json.loads(raw)
+        action = data.get("action")
+
+        if action == "auth":
+            token = data.get("token")
+            if token == None: ws.close()
+            if token in API_KEYS: authed = True
+
+            ws.send(json.dumps({"res":"success"}))
+            continue
+
+        if action == "is_running":
+            if not authed: ws.close()
+            ws.send(json.dumps({"res":running}))
+
+        if action == "update_score":
+            score = data.get("score")
             
-            return "", 200
-        return "", 498
+            if token == None: ws.close()
+            if score == None:
+                ws.send(json.dumps({"success":False,"message": "missing 'score' value"}))
+                continue
 
-    def get_level_counter(self):
-        data = request.get_json()
-        api_key = data.get("api_key")
-        if api_key  in API_KEYS:
-            return str(self.level_counter)
-        return "", 498
+        if (not ip in list(scores.keys())) or (scores[ip]!=score) and running:
+            score.update({ip:score})
+            print_with_prompt(f"Score ({ip}) : {scores[ip]}")
+            if scores[ip]>=target_score:
+                print_with_prompt(f"Score ({ip}) : {scores[ip]}")
+                if scores[ip]>=target_score:
+                    print_with_prompt(f"Niveau terminé ({ip}) !")
 
-    def get_level_info(self):
-        data = request.get_json()
-        api_key = data.get("api_key")
-        if api_key  in API_KEYS:
-            return jsonify({"level_counter":self.level_counter, 
-                            "target_score":self.target_score,
-                            "min_speed":self.min_speed,
-                            "max_speed":self.max_speed,
-                            "min_delay":self.min_delay,
-                            "max_delay":self.max_delay})
-        return "", 498
+                ws.send(json.dumps({"success":True}))
 
-    def run(self):
-        self.app.run(host="0.0.0.0", port=7890, debug=False)
+        ws.send(json.dumps({"success":False}))
 
-    def load_level(self, level_id):
-        self.reset_scores()
-        self.target_score = levels[level_id].get("target_score")
-        self.min_speed = levels[level_id].get("min_speed")
-        self.max_speed = levels[level_id].get("max_speed")
-        self.min_delay = levels[level_id].get("min_delay")
-        self.max_delay = levels[level_id].get("max_delay")
-        self.level_counter += 1
+@app.route("/api/get_level_counter", methods=["POST"])
+def get_level_counter():
+    data = request.get_json()
+    api_key = data.get("api_key")
+    if api_key  in API_KEYS:
+        return str(level_counter)
+    return "", 498
 
-    def reset_scores(self):
-        for i in list(self.scores.keys()):
-            self.scores[i] = 0
+@app.route("/api/get_level_info", methods=["POST"])
+def get_level_info():
+    data = request.get_json()
+    api_key = data.get("api_key")
+    if api_key  in API_KEYS:
+        return jsonify({"level_counter":level_counter, 
+                        "target_score":target_score,
+                        "min_speed":min_speed,
+                        "max_speed":max_speed,
+                        "min_delay":min_delay,
+                        "max_delay":max_delay})
+    return "", 498
 
+def run():
+    app.run(host="0.0.0.0", port=7890, debug=False)
 
+def load_level(level_id):
+    reset_scores()
+    global level_counter
+    target_score = levels[level_id].get("target_score")
+    min_speed = levels[level_id].get("min_speed")
+    max_speed = levels[level_id].get("max_speed")
+    min_delay = levels[level_id].get("min_delay")
+    max_delay = levels[level_id].get("max_delay")
+    level_counter += 1
 
-flask_app = FlaskApp()
-flask_thread = threading.Thread(target=flask_app.run, daemon=True)
+def reset_scores():
+    for i in list(scores.keys()):
+        scores[i] = 0
+
+flask_thread = threading.Thread(target=run, daemon=True)
 flask_thread.start()
 
 time.sleep(1)
 
 print("Console interactive. Tape 'exit' pour quitter.")
-
-print(f"Server local IP : {get_local_ip():}")
 
 while True:
     cmd = input("shooter> ")
@@ -188,27 +202,27 @@ while True:
         print(cmd[5:])
 
     elif cmd == "start":
-        flask_app.running = True
+        running = True
         print("Serveur démarré.")
 
     elif cmd == "stop":
-        flask_app.running = False
+        running = False
         print("Serveur arrêté.")
 
     elif cmd == "status":
-        print(f"Server {'running' if flask_app.running else 'stopped'}.")
+        print(f"Server {'running' if running else 'stopped'}.")
 
     elif cmd == "scores":
-        for i in list(flask_app.scores.keys()):
-            print(f"Score ({i}) : {flask_app.scores[i]}")
+        for i in list(scores.keys()):
+            print(f"Score ({i}) : {scores[i]}")
 
     elif cmd.startswith("load "):
-        flask_app.load_level(int(cmd[5:]))
+        load_level(int(cmd[5:]))
         print(f"Level {cmd[5:]} chargé.")
 
     elif cmd.startswith("reset"):
-        flask_app.reset_scores()
-        flask_app.level_counter += 1
+        reset_scores()
+        level_counter += 1
         print(f"Level reset.")
 
     else:
