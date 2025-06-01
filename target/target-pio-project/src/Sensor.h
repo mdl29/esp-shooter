@@ -8,8 +8,7 @@ class Sensor {
         Global* global;
     public:
         bool debug;
-        int max_value;
-        Sensor(int sensor_pin, int max_value, Global* global);
+        Sensor(int sensor_pin, Global* global);
         int get_sensor_value();
         bool detection();
         bool detection(int value);

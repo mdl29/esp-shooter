@@ -2,15 +2,15 @@
 #include "Sensor.h"
 #include "Global.h"
 
-Sensor::Sensor(int sensor_pin, int max_value, Global* global)
-    : sensor_pin(sensor_pin), max_value(max_value), global(global) {
+Sensor::Sensor(int sensor_pin, Global* global)
+    : sensor_pin(sensor_pin), global(global) {
     debug = false;
     pinMode(sensor_pin, INPUT);
     randomSeed(analogRead(27));
 }
 
 int Sensor::get_sensor_value() {
-    return analogRead(sensor_pin);
+    return digitalRead(sensor_pin);
 }
 
 bool Sensor::detection() {
@@ -18,7 +18,7 @@ bool Sensor::detection() {
 }
 
 bool Sensor::detection(int value) {
-    if (value>max_value) {
+    if (value) {
         Serial.print(" SENSOR | TIR DETECTE | ");
         Serial.println(value);
         return true;
