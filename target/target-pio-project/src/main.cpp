@@ -8,7 +8,6 @@
 const int servo_pin = SERVO_PIN;
 // SENSOR
 const int sensor_pin = SENSOR_PIN; // ~10K 
-const int max_value = MAX_VALUE;
 // COMS
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
@@ -46,7 +45,7 @@ void setup() {
     global.min_delay = 0;
     global.max_delay = 1;
 
-    static Sensor* sensor = new Sensor(sensor_pin,  max_value, &global);
+    static Sensor* sensor = new Sensor(sensor_pin, &global);
     static SensorParams *sensor_params = new SensorParams{sensor};
     xTaskCreate(sensor_wrapper, "SensorTask", 3000, (void*)sensor_params, 1, NULL);
 
