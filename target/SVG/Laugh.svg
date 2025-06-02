@@ -7,7 +7,7 @@
    viewBox="0 0 50 103.85051"
    version="1.1"
    id="svg2882"
-   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
    sodipodi:docname="Laugh.svg"
    inkscape:export-filename="Git_projects/esp-shooter/target/SVG/Laugh.png"
    inkscape:export-xdpi="96"
@@ -27,14 +27,14 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.73687825"
-     inkscape:cx="233.41712"
-     inkscape:cy="365.05352"
-     inkscape:window-width="1366"
-     inkscape:window-height="699"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
+     inkscape:zoom="1.0042008"
+     inkscape:cx="185.71983"
+     inkscape:cy="227.54413"
+     inkscape:window-width="1120"
+     inkscape:window-height="786"
+     inkscape:window-x="53"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
      inkscape:current-layer="g2145" />
   <defs
      id="defs2879" />
@@ -153,18 +153,22 @@
              id="path2139" />
         </g>
       </g>
-      <path
-         id="rect234"
-         style="fill:#ffce00;fill-opacity:1;stroke-width:1.27769"
-         d="m 739.55339,202.31911 h 45.08972 v 226.77166 c -22.31809,-15.91608 -22.31809,-15.7569 -45.08972,0 z"
-         sodipodi:nodetypes="ccccc" />
-      <rect
-         style="fill:#ffffff;stroke:none;stroke-width:3.77953"
-         id="rect1162"
-         width="16.705513"
-         height="16.705513"
-         x="753.74548"
-         y="326.7793" />
+      <g
+         id="g1"
+         transform="translate(0.94334252,-2.2657936)">
+        <path
+           id="rect234"
+           style="fill:#ffce00;fill-opacity:1;stroke-width:1.27769"
+           d="m 738.83682,204.961 h 45.08972 v 226.77166 c -22.31809,-15.91608 -22.31809,-15.7569 -45.08972,0 z"
+           sodipodi:nodetypes="ccccc" />
+        <rect
+           style="fill:#ffffff;stroke:none;stroke-width:3.77953"
+           id="rect1162"
+           width="16.705513"
+           height="16.705513"
+           x="753.02899"
+           y="329.42117" />
+      </g>
     </g>
   </g>
 </svg>
