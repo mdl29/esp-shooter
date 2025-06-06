@@ -77,7 +77,7 @@ threading.Thread(target=start_mdns, daemon=True).start()
 
 class FlaskApp :
     def __init__(self):
-        self.app = Flask(__name__) 
+        self.app = Flask(__name__, static_url_path='/static', static_folder='static') 
         CORS(self.app)
 
         self.running = False 
@@ -88,12 +88,16 @@ class FlaskApp :
         self.max_speed = 0
         self.min_delay = 0
         self.max_delay = 0
-        
+
         self.load_level(0)
+
+        self.picture = "None"
+        self.picture_counter = 0
 
         self.app.config['TEMPLATES_AUTO_RELOAD'] = True
         self.app.add_url_rule("/", "index", self.index)
         self.app.add_url_rule("/api/get_scores", "get_scores", self.get_scores)
+        self.app.add_url_rule("/api/get_picture", "get_picture", self.get_picture)
         self.app.add_url_rule("/api/is_running", "is_running", self.is_running, methods=['POST'])
         self.app.add_url_rule("/api/update_score", "update_score", self.update_score, methods=['POST'])
         self.app.add_url_rule("/api/get_level_info", "get_level_info", self.get_level_info, methods=['POST'])
@@ -102,6 +106,9 @@ class FlaskApp :
     def index(self):
         return render_template("index.html")
     
+    def get_picture(self):
+        return jsonify({"picture":self.picture, "picture_counter":self.picture_counter})
+
     def get_scores(self):
         return jsonify({"scores":[self.scores[d] for d in list(self.scores.keys())], "target_score":self.target_score})
 
@@ -205,6 +212,15 @@ while True:
     elif cmd.startswith("load "):
         flask_app.load_level(int(cmd[5:]))
         print(f"Level {cmd[5:]} chargé.")
+
+    elif cmd.startswith("picture "):
+        image_name = cmd[8:]
+        # Ajouter automatiquement le préfixe /static/ si ce n'est pas déjà fait
+        if not image_name.startswith("/static/") and not image_name.startswith("http"):
+            image_name = f"/static/{image_name}"
+        flask_app.picture = image_name
+        flask_app.picture_counter += 1
+        print(f"Picture set to {flask_app.picture}.")
 
     elif cmd.startswith("reset"):
         flask_app.reset_scores()

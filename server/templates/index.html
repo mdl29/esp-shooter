@@ -38,7 +38,7 @@
     <div class="container" id="circles-container"></div>
     
     <script>
-        const delay = 500;
+        const delay = 150;
 
         function updateCircles(numbers, targetValue) {
             const container = document.getElementById("circles-container");
@@ -55,6 +55,40 @@
         }
 
         async function fetchData() {
+            let picture_counter = 0;
+            let first_load = true;
+            setInterval(() => {
+                const xhr = new XMLHttpRequest();
+                xhr.open("GET", window.location.origin+"/api/get_picture");
+                xhr.send();
+                xhr.responseType = "json";
+                xhr.onload = () => {
+                    const data = xhr.response;
+                    if (data.picture_counter > picture_counter && data.picture!="None" && first_load!== true) {
+                        // Create a popup that automaticaly close after 5 seconds to display the picture (data.picture contains the URL of the picture)
+                        const popup = document.createElement("div");
+                        popup.style.position = "fixed";
+                        popup.style.top = "50%";
+                        popup.style.left = "50%";
+                        popup.style.transform = "translate(-50%, -50%)";
+                        popup.style.backgroundColor = "white";
+                        popup.style.padding = "20px";
+                        popup.style.border = "2px solid black";
+                        popup.style.zIndex = "1000";
+                        const img = document.createElement("img");
+                        img.src = data.picture;
+                        img.style.maxWidth = "100%";
+                        img.style.maxHeight = "100%";
+                        popup.appendChild(img);
+                        document.body.appendChild(popup);
+                        setTimeout(() => {
+                            document.body.removeChild(popup);
+                        }, 5000);
+                    }
+                    picture_counter = data.picture_counter;
+                    first_load = false;
+                }
+            }, 1000);
             while (true) {
                 try {
                     const xhr = new XMLHttpRequest();
@@ -65,6 +99,7 @@
                         const data = xhr.response;
                         updateCircles(data.scores, data.target_score);
                     }
+                    
                 } catch (error) {
                     console.error("Erreur lors de la récupération des données :", error);
                 }
