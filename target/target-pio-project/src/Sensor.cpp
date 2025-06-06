@@ -4,8 +4,8 @@
 
 Sensor::Sensor(int sensor_pin, Global* global)
     : sensor_pin(sensor_pin), global(global) {
-    debug = false;
-    pinMode(sensor_pin, INPUT);
+    debug = true;
+    pinMode(sensor_pin, INPUT_PULLDOWN);
     randomSeed(analogRead(27));
 }
 
