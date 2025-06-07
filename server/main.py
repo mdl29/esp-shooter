@@ -60,7 +60,7 @@ def start_mdns(service_name="shooter_server", service_type="_http._tcp.local.", 
     )
 
     zeroconf.register_service(service_info)
-    print(f"mDNS annoncé : {service_name} -> {local_ip}:{port}")
+    print(f"mDNS annoncé : {service_name} -> http://{local_ip}:{port}")
 
     try:
         while True:
@@ -80,9 +80,11 @@ class FlaskApp :
         self.app = Flask(__name__, static_url_path='/static', static_folder='static') 
         CORS(self.app)
 
-        self.running = False 
+        self.running = False
+        self.is_playing = False
         self.scores = {}
         self.level_counter = 0
+        self.level_id = 0
         self.target_score = 0
         self.min_speed = 0
         self.max_speed = 0
@@ -110,7 +112,7 @@ class FlaskApp :
         return jsonify({"picture":self.picture, "picture_counter":self.picture_counter})
 
     def get_scores(self):
-        return jsonify({"scores":[self.scores[d] for d in list(self.scores.keys())], "target_score":self.target_score})
+        return jsonify({"scores":[self.scores[d] for d in list(self.scores.keys())], "target_score":self.target_score, "level":self.level_id+1, "is_playing":self.running})
 
     def is_running(self):
         data = request.get_json()
@@ -161,6 +163,7 @@ class FlaskApp :
 
     def load_level(self, level_id):
         self.reset_scores()
+        self.level_id = level_id
         self.target_score = levels[level_id].get("target_score")
         self.min_speed = levels[level_id].get("min_speed")
         self.max_speed = levels[level_id].get("max_speed")
@@ -190,6 +193,15 @@ while True:
     if cmd == "exit":
         print("Arrêt du serveur et fermeture de la console.")
         break
+        
+    elif cmd.startswith("help"):
+        print("exit - Quitte le programme")
+        print("echo - Affiche du texte")
+        print("start - Lance le jeu")
+        print("stop - Stop le jeu")
+        print("scores - Affiche les scores")
+        print("load - Load un niveau")
+        print("reset - Reset les scores")
 
     elif cmd.startswith("echo "):
         print(cmd[5:])
