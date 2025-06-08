@@ -77,8 +77,8 @@
 </head>
 <body>
     <div class="info">
-        <p id="level">Niveau : </p>
-        <p id="targets-needed">Cibles à toucher : </p>
+        <p id="level">Niveau : ?</p>
+        <p id="targets-needed">Touchez chaque cible <b>?</b> fois</p>
     </div>
     <div class="container" id="circles-container"></div>
     <div class="message" id="game-message"></div>
@@ -158,7 +158,7 @@
                         document.getElementById("level").textContent = `Niveau : ${data.level || "?"}`;
 
                         // Cibles à toucher
-                        document.getElementById("targets-needed").textContent = `Cibles à toucher : ${data.target_score || 0}`;
+                        document.getElementById("targets-needed").innerHTML = `Touchez chaque cible <b>${data.target_score || "?"}</b> fois`;
 
                         // Message si le jeu n'est pas en cours
                         const msg = document.getElementById("game-message");
